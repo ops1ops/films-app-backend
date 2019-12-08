@@ -1,16 +1,19 @@
+require('dotenv').config();
 const express = require('express');
-const app = express();
+const filmsRoute = require('./routes/films');
 
 const PORT = process.env.PORT || 8000;
+const app = express();
 
-app.get('/', (req, res) => {
-  res.end('<h1>Test</h1>')
+app.use(express.json());
+app.set('json spaces', 4);
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "x-access-token, Origin, Content-Type, Accept");
+  next();
 });
 
-app.get('/films', (req, res) => {
-  res.end('<h1>Films</h1>')
-});
+app.use('/api', filmsRoute);
 
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`)
-});
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
