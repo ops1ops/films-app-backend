@@ -10,11 +10,11 @@ module.exports = (sequelize, DataTypes) => {
     releaseDate: DataTypes.DATE
   }, {});
 
-  Films.associate = ({ Genres }) => {
-    Films.belongsToMany(Genres,{
-      through: 'FilmsGenre',
-      as: 'genres'
-    });
+  Films.associate = ({ Genres, Directors, FilmsImages, Actors }) => {
+    Films.belongsToMany(Genres,{ through: 'FilmsGenre', as: 'genres' });
+    Films.belongsToMany(Actors,{ through: 'FilmActor', as: 'actors' });
+    Films.belongsTo(Directors, { as: 'director', foreignKey: 'directorId' });
+    Films.hasMany(FilmsImages, { as: 'images' });
   };
 
   return Films;
