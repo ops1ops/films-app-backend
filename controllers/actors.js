@@ -20,7 +20,7 @@ exports.getActorById = (req, res) => withErrorLogs(async () => {
       where: { id },
       attributes: ['id', 'name', 'gender', 'posterUrl', 'biography', 'bornDate'],
       include: [
-        { association: 'films', attributes: ['id', 'name'], through: { as: 'pivot', attributes: ['character'] } },
+        { association: 'films', attributes: ['id', 'name', 'posterUrl'], through: { as: 'pivot', attributes: ['character'] } },
         { association: 'images', attributes: ['id', 'url'] },
       ],
     })
