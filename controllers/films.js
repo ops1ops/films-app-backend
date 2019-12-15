@@ -1,23 +1,23 @@
 const withErrorLogs = require('../utils/withErrorLogs');
 const axios = require('axios');
 
-const { Films, Actors, Genres } = require('../db');
+const { Films, Actors, Genres, Rating } = require('../db');
 
-// const getFromApi = async (url) => {
-//   const response = await axios.get(url);
-//   const { headers: { 'x-ratelimit-remaining': limit } } = response;
-//   console.log('LIMIT', limit)
-//   if (limit === '1') {
-//     console.log('TIMEOUT STARTED ', new Date());
-//     await new Promise((res) => {
-//       setTimeout(() => {
-//         console.log('TIMEOUT FINISHED ', new Date());
-//         res();
-//       }, 8000);
-//     });
-//   }
-//   return response;
-// };
+const getFromApi = async (url) => {
+  const response = await axios.get(url);
+  const { headers: { 'x-ratelimit-remaining': limit } } = response;
+  console.log('LIMIT', limit)
+  if (limit === '1') {
+    console.log('TIMEOUT STARTED ', new Date());
+    await new Promise((res) => {
+      setTimeout(() => {
+        console.log('TIMEOUT FINISHED ', new Date());
+        res();
+      }, 8000);
+    });
+  }
+  return response;
+};
 
 exports.getAllFilms = (req, res) => withErrorLogs(async () => {
   const films = await(
@@ -53,6 +53,13 @@ exports.getFilmById = (req, res) => withErrorLogs(async () => {
   }
 
   return res.json(film);
+});
+
+exports.rateFilm = (req, res) => withErrorLogs(async () => {
+  const { id } = req.params;
+  console.log(id)
+
+  return res.send('qewq')
 });
 
 // PARSER
