@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
     Films.hasMany(FilmsImages, { as: 'images' });
     Films.hasMany(Films, { as: 'childs', foreignKey: 'parentId' });
     Films.belongsTo(Films, { as: 'parent', foreignKey: 'parentId'});
-    Films.belongsToMany(User, { through: 'Rating', as: 'ratedBy'});
+    Films.belongsToMany(User, { through: 'Rating', as: 'ratedBy', foreignKey: 'userId'});
   };
 
   return Films;

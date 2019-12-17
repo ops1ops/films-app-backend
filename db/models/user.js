@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     confirmed: DataTypes.BOOLEAN,
   }, {});
   User.associate = ({ Films }) => {
-    User.belongsToMany(Films, { through: 'Rating', as: 'ratedFilms'});
+    User.belongsToMany(Films, { through: 'Rating', as: 'ratedFilms', foreignKey: 'filmId'});
   };
   return User;
 };

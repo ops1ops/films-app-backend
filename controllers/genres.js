@@ -17,7 +17,7 @@ exports.getFilmsByGenreId = (req, res) => withErrorLogs(async () => {
 
   const films = await(
     Films.findAll({
-      attributes: ['id', 'name', 'description', 'posterUrl', 'releaseDate'],
+      attributes: ['id', 'type', 'name', 'description', 'posterUrl', 'releaseDate'],
       include: [{ association: 'genres', attributes: [], where: { id } }]
     })
   );

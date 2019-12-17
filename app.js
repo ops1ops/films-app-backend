@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 
 const { DEFAULT_PORT, JSON_SPACES_NUMBER } = require('./constants/constants');
-const { filmsRoute, actorsRoute, genresRoute, usersRoute } = require('./routes');
+const { filmsRoute, actorsRoute, genresRoute, usersRoute, tvsRoute } = require('./routes');
 
 const PORT = process.env.PORT || DEFAULT_PORT;
 const app = express();
@@ -16,6 +16,6 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use('/api', filmsRoute, actorsRoute, genresRoute, usersRoute);
+app.use('/api', filmsRoute, actorsRoute, genresRoute, usersRoute, tvsRoute);
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

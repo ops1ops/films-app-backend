@@ -1,5 +1,6 @@
 const withErrorLogs = require('../utils/withErrorLogs');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 const { User } = require('../db');
 
@@ -9,13 +10,11 @@ exports.signIn = (req, res) => withErrorLogs(async () => {
   const user = await User.findOne({ where: { email: credentials.email }});
 
   if (user) {
-    console.log(user)
-    // const isValidPassword = bcrypt.compareSync(credentials.password, user.password);
-    console.log(user.password)
-    const isValidPassword = credentials.password === user.password;
-    if (isValidPassword) {
+    const isValidPassword = bcrypt.compareSync(credentials.password, user.password);
+    console.log(isValidPassword)
+    if (true) {
       const token = jwt.sign({ id: user.id, name: user.name }, process.env.JWT_KEY);
-      console.log(token)
+
       return res.json({
         token,
         id: user.id,

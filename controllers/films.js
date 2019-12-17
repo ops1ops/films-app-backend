@@ -1,28 +1,14 @@
 const withErrorLogs = require('../utils/withErrorLogs');
 const axios = require('axios');
+const db = require('../db');
 
-const { Films, Actors, Genres, Rating } = require('../db');
-
-const getFromApi = async (url) => {
-  const response = await axios.get(url);
-  const { headers: { 'x-ratelimit-remaining': limit } } = response;
-  console.log('LIMIT', limit)
-  if (limit === '1') {
-    console.log('TIMEOUT STARTED ', new Date());
-    await new Promise((res) => {
-      setTimeout(() => {
-        console.log('TIMEOUT FINISHED ', new Date());
-        res();
-      }, 8000);
-    });
-  }
-  return response;
-};
+const { Films, Actors, Genres, Rating } = db;
 
 exports.getAllFilms = (req, res) => withErrorLogs(async () => {
   const films = await(
     Films.findAll({
-      attributes: ['id', 'name', 'releaseDate', 'posterUrl', 'backdropUrl']
+      where: { type: 'film' },
+      attributes: ['id', 'type', 'name', 'description', 'releaseDate', 'posterUrl', 'backdropUrl']
     })
   );
 
@@ -35,7 +21,7 @@ exports.getFilmById = (req, res) => withErrorLogs(async () => {
   const film = await(
     Films.findOne({
       where: { id },
-      attributes: ['id', 'name', 'posterUrl', 'description', 'duration', 'releaseDate'],
+      attributes: ['id', 'type', 'name', 'posterUrl', 'description', 'duration', 'releaseDate'],
       include: [
         { association: 'genres', attributes: ['id', 'name'], through: { attributes: [] } },
         { association: 'director', attributes: ['id', 'name', 'posterUrl', 'biography', 'bornDate'] },
@@ -57,9 +43,38 @@ exports.getFilmById = (req, res) => withErrorLogs(async () => {
 
 exports.rateFilm = (req, res) => withErrorLogs(async () => {
   const { id } = req.params;
-  console.log(id)
+  const { rating } = req.body;
+  const { userId } = req;
 
-  return res.send('qewq')
+  const isRatingValid = rating <= 10 && rating >= 1;
+
+  if (isRatingValid) {
+    const [ratedObj, isCreated] = await Rating.findOrCreate({
+      where: { userId, filmId: id },
+      defaults: { filmId: id, userId, rating }
+    });
+
+    if (!isCreated) {
+      await ratedObj.update({ rating });
+    }
+
+    const average = await Rating.findAll({
+      where: { filmId: id },
+      attributes: ['filmId', [db.sequelize.fn('AVG', db.sequelize.col('rating')), 'ratingAvg']],
+      group: ['filmId'],
+      order: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'DESC']]
+    });
+
+    const ratings = await Rating.findAll({
+      where: { filmId: id },
+    });
+
+    const count = ratings.length;
+
+    return res.send({ rating, average, count })
+  }
+
+  return res.status(422).send({ error: 'Invalid rating' })
 });
 
 // PARSER
