@@ -23,8 +23,27 @@ exports.signIn = (req, res) => withErrorLogs(async () => {
       });
     }
 
-    return res.status(422).send({ error: 'User with this email and password doesnt exist' })
+    return res.status(404).send({ error: 'User with this email and password doesnt exist' })
   }
 
   return res.status(404).send({ error: 'User with this email does not exist' });
+});
+
+exports.getUserById = (req, res) => withErrorLogs(async () => {
+  const { id } = req.params;
+
+  const user = await User.findOne({
+    where: { id },
+    attributes: ['id'],
+    include: [
+      { association: 'toWatchFilms', attributes: ['id', 'name', 'posterUrl', 'releaseDate', 'description'] },
+      { association: 'ratedFilms', attributes: ['id', 'name', 'posterUrl', 'releaseDate', 'description'] }
+    ]
+  });
+
+  if (!user) {
+    return res.status(404).send({ error: 'User does not exist'});
+  }
+
+  res.json(user);
 });

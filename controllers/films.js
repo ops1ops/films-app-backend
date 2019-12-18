@@ -1,8 +1,9 @@
 const withErrorLogs = require('../utils/withErrorLogs');
 const axios = require('axios');
 const db = require('../db');
+const getRatingInfoByFilmId = require('../utils/getRatingInfoByFilmId');
 
-const { Films, Actors, Genres, Rating } = db;
+const { Films, Actors, Genres, Rating, Watchlist } = db;
 
 exports.getAllFilms = (req, res) => withErrorLogs(async () => {
   const films = await(
@@ -17,6 +18,7 @@ exports.getAllFilms = (req, res) => withErrorLogs(async () => {
 
 exports.getFilmById = (req, res) => withErrorLogs(async () => {
   const { id } = req.params;
+  const { userId } = req.query;
 
   const film = await(
     Films.findOne({
@@ -25,8 +27,9 @@ exports.getFilmById = (req, res) => withErrorLogs(async () => {
       include: [
         { association: 'genres', attributes: ['id', 'name'], through: { attributes: [] } },
         { association: 'director', attributes: ['id', 'name', 'posterUrl', 'biography', 'bornDate'] },
-        { association: 'ratedBy', attributes: ['name'], through: { attributes: ['rating'], as: 'pivot' } },
+        { association: 'ratedBy', attributes: ['id'], through: { attributes: ['rating'], as: 'pivot' } },
         { association: 'images', attributes: ['id', 'url'] },
+        { association: 'toWatchedBy', attributes: ['id'] },
         { association: 'actors', attributes: ['id', 'posterUrl', 'name'], through: { as: 'pivot', attributes: ['character']} },
         { association: 'childs'},
         { association: 'parent'}
@@ -38,43 +41,65 @@ exports.getFilmById = (req, res) => withErrorLogs(async () => {
     return res.status(404).send({ error: 'Film does not exist'});
   }
 
-  return res.json(film);
+  const ratingInfo = await getRatingInfoByFilmId(id);
+
+  return res.json({ data: film, ratingInfo });
 });
 
 exports.rateFilm = (req, res) => withErrorLogs(async () => {
   const { id } = req.params;
   const { rating } = req.body;
   const { userId } = req;
-
+  console.log(rating)
   const isRatingValid = rating <= 10 && rating >= 1;
-
+  console.log(isRatingValid, "QQQQ")
   if (isRatingValid) {
     const [ratedObj, isCreated] = await Rating.findOrCreate({
-      where: { userId, filmId: id },
-      defaults: { filmId: id, userId, rating }
+      where: { UserId: userId, FilmId: id },
+      defaults: { FilmId: id, rating }
     });
 
     if (!isCreated) {
       await ratedObj.update({ rating });
     }
 
-    const average = await Rating.findAll({
-      where: { filmId: id },
-      attributes: ['filmId', [db.sequelize.fn('AVG', db.sequelize.col('rating')), 'ratingAvg']],
-      group: ['filmId'],
-      order: [[db.sequelize.fn('AVG', db.sequelize.col('rating')), 'DESC']]
-    });
-
-    const ratings = await Rating.findAll({
-      where: { filmId: id },
-    });
-
-    const count = ratings.length;
-
-    return res.send({ rating, average, count })
+    const ratingInfo = await getRatingInfoByFilmId(id);
+    console.log(ratingInfo)
+    return res.send({ rating, ratingInfo })
   }
 
   return res.status(422).send({ error: 'Invalid rating' })
+});
+
+exports.addToWatchlist = (req, res) => withErrorLogs(async () => {
+  const { id } = req.params;
+  const { userId } = req;
+  try {
+    const watchlist = await Watchlist.create({ FilmId: id, UserId: userId });
+
+    if (watchlist) {
+      return res.send({ success: true })
+    }
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: 'Something went wrong' });
+  }
+});
+
+exports.deleteFromWatchList = (req, res) => withErrorLogs(async () => {
+  const { id } = req.params;
+  const { userId } = req;
+
+  try {
+    await Watchlist.destroy({
+      where: {FilmId: id, UserId: userId}
+    })
+
+    return res.send({ success: true })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send({ error: 'Something went wrong' });
+  }
 });
 
 // PARSER

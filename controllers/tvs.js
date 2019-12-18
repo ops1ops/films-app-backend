@@ -124,5 +124,7 @@ exports.getTVById = (req, res) => withErrorLogs(async () => {
     return res.status(404).send({ error: 'TV does not exist'});
   }
 
-  return res.json(tv);
+  const ratingInfo = await getRatingInfoByFilmId(id);
+
+  return res.json({ data: tv, ratingInfo });
 });
