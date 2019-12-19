@@ -3,7 +3,8 @@ const axios = require('axios');
 const db = require('../db');
 const getRatingInfoByFilmId = require('../utils/getRatingInfoByFilmId');
 
-const { Films, Actors, Genres, Rating, Watchlist } = db;
+const { Films, Actors, Genres, Rating, Watchlist, Sequelize } = db;
+const { Op } = Sequelize;
 
 exports.getAllFilms = (req, res) => withErrorLogs(async () => {
   const films = await(
@@ -98,6 +99,20 @@ exports.deleteFromWatchList = (req, res) => withErrorLogs(async () => {
     return res.send({ success: true })
   } catch (error) {
     console.log(error);
+    return res.status(500).send({ error: 'Something went wrong' });
+  }
+});
+
+exports.search = (req, res) => withErrorLogs(async () => {
+  const { name } = req.query;
+  console.log(2)
+  try {
+    const films = await Films.findAll({
+      where: name ? { name: { [Op.like]: `%${name}%`} } : {}
+    });
+
+    return res.send(films)
+  } catch (error) {
     return res.status(500).send({ error: 'Something went wrong' });
   }
 });
